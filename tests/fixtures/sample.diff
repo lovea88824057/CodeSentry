@@ -1,0 +1,110 @@
+diff --git a/app/service.py b/app/service.py
+index 1111111..2222222 100644
+--- a/app/service.py
++++ b/app/service.py
+@@ -8,10 +8,13 @@ from typing import Optional
+ 
+ 
+ class UserService:
+-    """用户服务。"""
++    """用户服务。
++
++    负责按 id 查询用户，并在内存里做一层缓存。
++    """
+ 
+     def __init__(self, db):
+         self.db = db
+         self.cache = {}
+-        self.timeout = 10
++        self.timeout = 30
+ 
+     def get_user(self, user_id):
+-        return self.db.query(user_id)
++        # 直接取属性，没有处理查不到的情况
++        user = self.db.query(user_id)
++        return user.name
+diff --git a/app/report.py b/app/report.py
+index 3333333..4444444 100644
+--- a/app/report.py
++++ b/app/report.py
+@@ -1,6 +1,14 @@
+ import csv
+ 
+ 
+ def export(rows, path, batch_size=100):
+-    with open(path, "w") as fh:
+-        writer = csv.writer(fh)
+-        writer.writerows(rows)
++    """把 rows 分批写入 csv。"""
++    fh = open(path, "w")
++    writer = csv.writer(fh)
++    for i in range(0, len(rows), batch_size):
++        batch = rows[i:i + batch_size + 1]
++        writer.writerows(batch)
++    return len(rows)
+diff --git a/app/retry.py b/app/retry.py
+new file mode 100644
+index 0000000..5555555
+--- /dev/null
++++ b/app/retry.py
+@@ -0,0 +1,16 @@
++"""重试工具。"""
++
++import time
++
++
++def retry(fn, times=3, delay=1):
++    last_error = None
++    for _ in range(times):
++        try:
++            return fn()
++        except Exception as exc:
++            last_error = exc
++            time.sleep(delay)
++    raise last_error
++
++
++def noop():
++    pass
+diff --git a/legacy/old_util.py b/legacy/old_util.py
+deleted file mode 100644
+index 6666666..0000000
+--- a/legacy/old_util.py
++++ /dev/null
+@@ -1,4 +0,0 @@
+-def old():
+-    pass
+-
+-
+diff --git a/docs/guide.md b/docs/guide.md
+similarity index 100%
+rename from docs/guide.md
+rename to docs/handbook.md
+diff --git a/package-lock.json b/package-lock.json
+index 7777777..8888888 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,4 +1,5 @@
+ {
++  "lockfileVersion": 3,
+   "name": "demo",
+   "version": "1.0.0"
+ }
+diff --git a/assets/logo.png b/assets/logo.png
+index 9999999..aaaaaaa 100644
+Binary files a/assets/logo.png and b/assets/logo.png differ
+diff --git a/app/nested/deep.py b/app/nested/deep.py
+index bbbbbbb..ccccccc 100644
+--- a/app/nested/deep.py
++++ b/app/nested/deep.py
+@@ -1,5 +1,7 @@
++import threading
++
++
++LOCK = threading.Lock()
+ 
+-
+-def compute(a, b):
+-    return a + b
++def compute(a, b):
++    return a - b

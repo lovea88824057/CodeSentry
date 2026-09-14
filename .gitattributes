@@ -1,0 +1,25 @@
+# 换行策略：避免 Windows/Linux 协作时把整个仓库的换行改掉。
+# 不加这个文件，Git 会把所有文本文件按 core.autocrlf 转成 CRLF，
+# 导致 Linux 侧 checkout 出来的 .sh / .py 与仓库内容不一致。
+
+# 默认：仓库内统一存 LF，checkout 时按平台自动转换
+* text=auto eol=lf
+
+# 批处理文件必须保持 CRLF，否则 cmd 解析多行 if 块会错乱
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制文件不做任何转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+
+# 测试用 diff fixture 必须逐字节保持原样，
+# 否则行尾被改写会导致解析测试结果漂移
+tests/fixtures/*.diff -text

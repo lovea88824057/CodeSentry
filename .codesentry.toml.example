@@ -1,0 +1,62 @@
+# CodeSentry 配置样例
+# 用法：复制为 .codesentry.toml 放在项目根目录（或你运行 codesentry 的目录）。
+#
+# 优先级（高 -> 低）：CLI 参数 > 环境变量 > 本文件 > 内置默认
+# 用 `codesentry config` 可以看到每一项的最终取值和来源。
+
+[config]
+# 主模型。格式是 litellm 的 "<provider>/<model>"，换供应商只改这一行。
+model = "deepseek/deepseek-chat"
+# fallback 链：主模型超时/报错时依次尝试
+fallback_models = ["openai/gpt-4o-mini"]
+# 上下文窗口上限（tiktoken 估算，超过就触发分块）
+max_model_tokens = 32000
+# 留给模型输出的 token 预算，分块时从上下文里扣掉
+max_output_tokens = 4000
+# 单次请求超时（秒）
+timeout = 120
+# 采样温度。review 场景建议低值，追求稳定
+temperature = 0.2
+# 输出语言：叙述部分用中文，代码/标识符保持原文
+response_language = "zh-CN"
+# 0=安静 1=常规 2=调试（打印 prompt、token 统计）
+verbosity = 1
+
+[review]
+# 以下开关直接决定 prompt 里出现哪些要求，关掉就不再让模型输出对应字段
+require_score = true              # 总体评分 0-10
+require_risk_assessment = true    # 风险等级 low/medium/high
+require_tests_review = true       # 建议补充的测试
+require_merge_recommendation = false   # 合并建议 safe_to_merge / changes_required
+require_effort_estimate = true    # 人工审查工作量估算
+require_file_summaries = true     # 逐文件要点
+# 关键问题条数上限
+num_max_findings = 5
+# 追加给模型的自由指令（团队规范、本次关注点）
+extra_instructions = ""
+# 是否把被忽略的文件清单也写进报告
+report_skipped_files = true
+
+[ignore]
+# 命中即跳过（glob 语义，相对仓库根）
+paths = [
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/build/**",
+  "**/.venv/**",
+  "**/venv/**",
+  "**/__pycache__/**",
+  "**/*.lock",
+  "**/*.min.js",
+  "**/*.min.css",
+  "**/package-lock.json",
+  "**/pnpm-lock.yaml",
+  "**/poetry.lock",
+]
+# 扩展名黑名单（文档/图片/二进制等对代码审查无价值）
+extensions = [".md", ".txt", ".rst", ".svg", ".png", ".jpg", ".jpeg", ".gif",
+              ".ico", ".pdf", ".woff", ".woff2", ".ttf", ".lock", ".sum"]
+# 单个文件超过这个 token 数就按 large_file_policy 处理
+max_file_tokens = 8000
+# "clip" = 裁掉超出部分继续审；"skip" = 整个文件跳过
+large_file_policy = "clip"
